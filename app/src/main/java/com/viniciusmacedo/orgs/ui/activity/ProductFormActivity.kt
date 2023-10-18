@@ -1,13 +1,12 @@
 package com.viniciusmacedo.orgs.ui.activity
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import com.viniciusmacedo.orgs.R
+import androidx.appcompat.app.AppCompatActivity
 import com.viniciusmacedo.orgs.dao.ProductDao
 import com.viniciusmacedo.orgs.databinding.ActivityProductFormBinding
+import com.viniciusmacedo.orgs.extensions.loadImage
 import com.viniciusmacedo.orgs.model.Product
+import com.viniciusmacedo.orgs.ui.dialog.DialogImageForm
 import java.math.BigDecimal
 
 class ProductFormActivity : AppCompatActivity() {
@@ -15,11 +14,23 @@ class ProductFormActivity : AppCompatActivity() {
     private val binding by lazy {
         ActivityProductFormBinding.inflate(layoutInflater)
     }
+
+    private var url: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        title = "Cadastrar Produto"
         setUpSaveButton()
+        binding.activityProductFormImage.setOnClickListener {
+            DialogImageForm(this).show(url){ image ->
+                url = image
+                binding.activityProductFormImage.loadImage(url, this)
+            }
+        }
     }
+
+
 
     private fun setUpSaveButton() {
         val dao = ProductDao()
@@ -39,9 +50,10 @@ class ProductFormActivity : AppCompatActivity() {
         val valueField = binding.activityProductFormValue
         val valueText = valueField.text.toString()
         val value = if (valueText.isBlank()) BigDecimal.ZERO else BigDecimal(valueText)
+        val imageUrl = url
 
         return Product(
-            name = name, description = description, price = (value)
+            name = name, description = description, price = (value), image = imageUrl
         )
     }
 }

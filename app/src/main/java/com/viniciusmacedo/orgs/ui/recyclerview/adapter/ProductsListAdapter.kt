@@ -4,33 +4,60 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.viniciusmacedo.orgs.R
+import com.viniciusmacedo.orgs.databinding.ProductItemBinding
+import com.viniciusmacedo.orgs.extensions.formatToBRL
+import com.viniciusmacedo.orgs.extensions.loadImage
 import com.viniciusmacedo.orgs.model.Product
 
 class ProductsListAdapter(
     products: List<Product>,
-    val context: Context
+    val context: Context,
+    var onCardClicked: (product: Product) -> Unit = {}
 ) : RecyclerView.Adapter<ProductsListAdapter.ViewHolder>() {
 
     private val products = products.toMutableList()
 
-    class ViewHolder (view: View): RecyclerView.ViewHolder(view) {
-        fun binding(product: Product) {
-            val name = itemView.findViewById<TextView>(R.id.product_item_name)
-            name.text = product.name
-            val description = itemView.findViewById<TextView>(R.id.product_item_description)
-            description.text = product.description
-            val price = itemView.findViewById<TextView>(R.id.product_item_price)
-            price.text = product.price.toPlainString()
+    inner class ViewHolder(private val binding: ProductItemBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        private lateinit var product: Product
+        init {
+            itemView.setOnClickListener {
+                if (::product.isInitialized){
+                    onCardClicked(product)
+                }
+            }
         }
+
+        fun adapterBinding(product: Product) {
+            this.product = product
+            binding.apply {
+                val name = productItemName
+                name.text = product.name
+                val description = productItemDescription
+                description.text = product.description
+                val price = productItemPrice
+                price.text = product.price.formatToBRL()
+
+                val visibility = if (product.image != null) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+                productItemImage.visibility = visibility
+
+                productItemImage.loadImage(product.image, context)
+            }
+
+        }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(context)
-        val view = inflater.inflate(R.layout.product_item, parent, false)
-        return ViewHolder(view)
+        val binding = ProductItemBinding.inflate(inflater, parent, false)
+        return ViewHolder(binding)
     }
 
     override fun getItemCount(): Int {
@@ -39,7 +66,7 @@ class ProductsListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val product = products[position]
-        holder.binding(product)
+        holder.adapterBinding(product)
     }
 
     fun update(products: List<Product>) {
